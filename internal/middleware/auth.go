@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -29,6 +30,28 @@ func GetUID(ctx context.Context) (string, bool) {
 type TokenVerifier interface {
 	VerifyIDToken(ctx context.Context, idToken string) (*auth.Token, error)
 }
+
+// DevTokenVerifier provides a development fallback when Firebase credentials are not provided.
+type DevTokenVerifier struct{}
+
+// NewDevTokenVerifier creates a new DevTokenVerifier.
+func NewDevTokenVerifier() *DevTokenVerifier {
+	return &DevTokenVerifier{}
+}
+
+// VerifyIDToken verifies tokens in development mode.
+// Supports tokens like "mock-token:<uid>" or defaults to UID "dev-user".
+func (d *DevTokenVerifier) VerifyIDToken(ctx context.Context, idToken string) (*auth.Token, error) {
+	if strings.TrimSpace(idToken) == "" {
+		return nil, errors.New("empty id token")
+	}
+	uid := "dev-user"
+	if strings.HasPrefix(idToken, "mock-token:") {
+		uid = strings.TrimPrefix(idToken, "mock-token:")
+	}
+	return &auth.Token{UID: uid}, nil
+}
+
 
 type errorEnvelope struct {
 	Error errorDetail `json:"error"`
