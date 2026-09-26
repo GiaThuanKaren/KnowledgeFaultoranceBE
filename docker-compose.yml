@@ -45,7 +45,15 @@ services:
     environment:
       PORT: "8080"
       DATABASE_URL: "postgres://postgres:postgres@postgres:5432/kfdesktop?sslmode=disable"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_NAME: "kfdesktop"
+      DB_SSLMODE: "disable"
       REDIS_URL: "redis://redis:6379/0"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
       ENVIRONMENT: "development"
     depends_on:
       postgres:

@@ -65,8 +65,17 @@ Hệ thống tải cấu hình từ biến môi trường hệ thống hoặc fi
    | :--- | :--- | :--- |
    | `PORT` | `8080` | Port lắng nghe của HTTP Server |
    | `ENVIRONMENT` | `development` | Môi trường (`development` / `production` / `test`) |
-   | `DATABASE_URL` | `postgres://postgres:postgres@localhost:5432/kfdesktop?sslmode=disable` | Connection string PostgreSQL |
-   | `REDIS_URL` | `redis://localhost:6379/0` | URL kết nối Redis |
+   | `DATABASE_URL` | `postgres://postgres:postgres@localhost:5432/kfdesktop?sslmode=disable` | Connection string PostgreSQL (Ưu tiên cao nhất) |
+   | `DB_HOST` | `localhost` | Host PostgreSQL (khi không dùng `DATABASE_URL`) |
+   | `DB_PORT` | `5432` | Port PostgreSQL |
+   | `DB_USER` | `postgres` | User PostgreSQL |
+   | `DB_PASSWORD` | `postgres` | Password PostgreSQL |
+   | `DB_NAME` | `kfdesktop` | Tên cơ sở dữ liệu PostgreSQL |
+   | `DB_SSLMODE` | `disable` | Chế độ SSL (`disable` / `require`) |
+   | `REDIS_URL` | `redis://localhost:6379/0` | URL kết nối Redis (Ưu tiên cao nhất) |
+   | `REDIS_HOST` | `localhost` | Host Redis (khi không dùng `REDIS_URL`) |
+   | `REDIS_PORT` | `6379` | Port Redis |
+   | `REDIS_PASSWORD` | `""` | Password Redis |
    | `FIREBASE_CREDENTIALS_JSON` | `""` | JSON string Service Account của Firebase |
 
 ---

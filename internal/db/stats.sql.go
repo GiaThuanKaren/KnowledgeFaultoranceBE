@@ -13,17 +13,17 @@ import (
 
 const getDailyStatsByYear = `-- name: GetDailyStatsByYear :many
 SELECT user_id, stat_date, activity_count FROM daily_stats
-WHERE user_id = $1 AND EXTRACT(YEAR FROM stat_date)::int = $2
+WHERE user_id = $1 AND EXTRACT(YEAR FROM stat_date)::int = $2::int
 ORDER BY stat_date ASC
 `
 
 type GetDailyStatsByYearParams struct {
-	UserID   string      `json:"user_id"`
-	StatDate pgtype.Date `json:"stat_date"`
+	UserID string `json:"user_id"`
+	Year   int32  `json:"year"`
 }
 
 func (q *Queries) GetDailyStatsByYear(ctx context.Context, arg GetDailyStatsByYearParams) ([]DailyStat, error) {
-	rows, err := q.db.Query(ctx, getDailyStatsByYear, arg.UserID, arg.StatDate)
+	rows, err := q.db.Query(ctx, getDailyStatsByYear, arg.UserID, arg.Year)
 	if err != nil {
 		return nil, err
 	}

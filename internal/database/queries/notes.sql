@@ -30,10 +30,10 @@ LIMIT 1;
 
 -- name: UpdateNote :one
 UPDATE notes
-SET title = $2,
-    content = $3,
+SET title = $3,
+    content = $4,
     updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL
 RETURNING *;
 
 -- name: SoftDeleteNote :exec

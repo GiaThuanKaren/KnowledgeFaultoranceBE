@@ -7,5 +7,5 @@ RETURNING *;
 
 -- name: GetDailyStatsByYear :many
 SELECT * FROM daily_stats
-WHERE user_id = $1 AND EXTRACT(YEAR FROM stat_date)::int = $2
+WHERE user_id = $1 AND EXTRACT(YEAR FROM stat_date)::int = sqlc.arg('year')::int
 ORDER BY stat_date ASC;

@@ -85,3 +85,45 @@ func TestLoad_PartialEnv(t *testing.T) {
 		t.Errorf("expected default DatabaseURL, got %q", cfg.DatabaseURL)
 	}
 }
+
+func TestLoad_IndividualEnvVars(t *testing.T) {
+	// Ensure full URLs are not set
+	os.Unsetenv("DATABASE_URL")
+	os.Unsetenv("REDIS_URL")
+
+	// Set individual DB variables
+	t.Setenv("DB_HOST", "db.example.com")
+	t.Setenv("DB_PORT", "5433")
+	t.Setenv("DB_USER", "appuser")
+	t.Setenv("DB_PASSWORD", "appsecret")
+	t.Setenv("DB_NAME", "flowdb")
+	t.Setenv("DB_SSLMODE", "require")
+
+	// Set individual Redis variables
+	t.Setenv("REDIS_HOST", "redis.example.com")
+	t.Setenv("REDIS_PORT", "6380")
+	t.Setenv("REDIS_PASSWORD", "redissecret")
+
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	expectedDB := "postgres://appuser:appsecret@db.example.com:5433/flowdb?sslmode=require"
+	if cfg.DatabaseURL != expectedDB {
+		t.Errorf("expected built DatabaseURL %q, got %q", expectedDB, cfg.DatabaseURL)
+	}
+
+	expectedRedis := "redis://:redissecret@redis.example.com:6380/0"
+	if cfg.RedisURL != expectedRedis {
+		t.Errorf("expected built RedisURL %q, got %q", expectedRedis, cfg.RedisURL)
+	}
+
+	if cfg.DBHost != "db.example.com" || cfg.DBPort != "5433" || cfg.DBUser != "appuser" || cfg.DBName != "flowdb" {
+		t.Errorf("expected individual DB fields to match environment, got %+v", cfg)
+	}
+	if cfg.RedisHost != "redis.example.com" || cfg.RedisPort != "6380" || cfg.RedisPassword != "redissecret" {
+		t.Errorf("expected individual Redis fields to match environment, got %+v", cfg)
+	}
+}
+

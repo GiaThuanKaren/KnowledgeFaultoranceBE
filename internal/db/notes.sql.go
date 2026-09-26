@@ -324,21 +324,27 @@ func (q *Queries) SoftDeleteNote(ctx context.Context, arg SoftDeleteNoteParams) 
 
 const updateNote = `-- name: UpdateNote :one
 UPDATE notes
-SET title = $2,
-    content = $3,
+SET title = $3,
+    content = $4,
     updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL
 RETURNING id, user_id, project_id, title, content, created_at, updated_at, deleted_at
 `
 
 type UpdateNoteParams struct {
 	ID      pgtype.UUID `json:"id"`
+	UserID  string      `json:"user_id"`
 	Title   string      `json:"title"`
 	Content string      `json:"content"`
 }
 
 func (q *Queries) UpdateNote(ctx context.Context, arg UpdateNoteParams) (Note, error) {
-	row := q.db.QueryRow(ctx, updateNote, arg.ID, arg.Title, arg.Content)
+	row := q.db.QueryRow(ctx, updateNote,
+		arg.ID,
+		arg.UserID,
+		arg.Title,
+		arg.Content,
+	)
 	var i Note
 	err := row.Scan(
 		&i.ID,

@@ -173,17 +173,18 @@ func (q *Queries) SoftDeleteProject(ctx context.Context, arg SoftDeleteProjectPa
 
 const updateProject = `-- name: UpdateProject :one
 UPDATE projects
-SET title = $2,
-    description = $3,
-    color = $4,
-    status = $5,
+SET title = $3,
+    description = $4,
+    color = $5,
+    status = $6,
     updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL
 RETURNING id, user_id, title, description, color, status, created_at, updated_at, deleted_at
 `
 
 type UpdateProjectParams struct {
 	ID          pgtype.UUID `json:"id"`
+	UserID      string      `json:"user_id"`
 	Title       string      `json:"title"`
 	Description string      `json:"description"`
 	Color       string      `json:"color"`
@@ -193,6 +194,7 @@ type UpdateProjectParams struct {
 func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error) {
 	row := q.db.QueryRow(ctx, updateProject,
 		arg.ID,
+		arg.UserID,
 		arg.Title,
 		arg.Description,
 		arg.Color,

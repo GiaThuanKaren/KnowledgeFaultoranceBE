@@ -25,12 +25,12 @@ LIMIT 1;
 
 -- name: UpdateProject :one
 UPDATE projects
-SET title = $2,
-    description = $3,
-    color = $4,
-    status = $5,
+SET title = $3,
+    description = $4,
+    color = $5,
+    status = $6,
     updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL
 RETURNING *;
 
 -- name: SoftDeleteProject :exec

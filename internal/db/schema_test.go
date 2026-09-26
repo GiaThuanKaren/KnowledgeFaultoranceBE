@@ -180,3 +180,44 @@ func TestQuerierMethodsExist(t *testing.T) {
 		}
 	}
 }
+
+// TestQueryParamsTypes verifies parameter types for specific queries
+func TestQueryParamsTypes(t *testing.T) {
+	t.Run("GetDailyStatsByYearParams has Year int32", func(t *testing.T) {
+		p := db.GetDailyStatsByYearParams{
+			UserID: "uid-1",
+			Year:   2026,
+		}
+		typ := reflect.TypeOf(p)
+		field, ok := typ.FieldByName("Year")
+		if !ok {
+			t.Fatal("missing Year field in GetDailyStatsByYearParams")
+		}
+		if field.Type.Kind() != reflect.Int32 {
+			t.Errorf("expected Year field to be int32, got %v", field.Type.Kind())
+		}
+	})
+
+	t.Run("UpdateProjectParams has UserID and ID", func(t *testing.T) {
+		p := db.UpdateProjectParams{}
+		typ := reflect.TypeOf(p)
+		if _, ok := typ.FieldByName("UserID"); !ok {
+			t.Errorf("missing UserID field in UpdateProjectParams")
+		}
+		if _, ok := typ.FieldByName("ID"); !ok {
+			t.Errorf("missing ID field in UpdateProjectParams")
+		}
+	})
+
+	t.Run("UpdateNoteParams has UserID and ID", func(t *testing.T) {
+		p := db.UpdateNoteParams{}
+		typ := reflect.TypeOf(p)
+		if _, ok := typ.FieldByName("UserID"); !ok {
+			t.Errorf("missing UserID field in UpdateNoteParams")
+		}
+		if _, ok := typ.FieldByName("ID"); !ok {
+			t.Errorf("missing ID field in UpdateNoteParams")
+		}
+	})
+}
+
