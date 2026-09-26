@@ -1,0 +1,31 @@
+# Binaries and build artifacts
+bin/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Environment variables & secrets (NEVER COMMIT SENSITIVE FILES)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*serviceAccountKey*.json
+*firebase-credentials*.json
+firebase-adminsdk*.json
+
+# Test and coverage artifacts
+*.out
+*.test
+coverage/
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~

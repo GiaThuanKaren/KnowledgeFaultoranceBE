@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: kfdesktopbe
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kfdesktop-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: kfdesktop-redis
+          property: connectionString
+      - key: FIREBASE_CREDENTIALS_JSON
+        sync: false
+
+  - type: redis
+    name: kfdesktop-redis
+    plan: free
+    region: singapore
+    ipAllowList: []
+
+databases:
+  - name: kfdesktop-db
+    databaseName: kfdesktop
+    user: postgres
+    plan: free
+    region: singapore
