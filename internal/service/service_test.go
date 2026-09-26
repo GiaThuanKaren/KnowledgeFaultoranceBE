@@ -727,3 +727,151 @@ func TestCreateProject_Validation(t *testing.T) {
 		t.Errorf("expected ErrUnauthorized for empty uid, got %v", err)
 	}
 }
+
+func TestCreateQuicknote_UTF8_Vietnamese(t *testing.T) {
+	ctx := context.Background()
+	mock := newMockQuerier()
+	noteSvc := service.NewNoteService(mock, nil)
+
+	// Long Vietnamese sentence with diacritics > 50 runes
+	content := "Đây là một ghi chú nhanh bằng tiếng Việt có dấu rất dài hơn năm mươi ký tự để kiểm tra việc cắt chuỗi an toàn không lỗi font."
+	note, err := noteSvc.CreateQuicknote(ctx, "user-vn", content)
+	if err != nil {
+		t.Fatalf("CreateQuicknote failed: %v", err)
+	}
+
+	titleRunes := []rune(note.Title)
+	if len(titleRunes) != 50 {
+		t.Errorf("expected title length 50 runes, got %d", len(titleRunes))
+	}
+
+	expectedPrefix := string([]rune(content)[:50])
+	if note.Title != expectedPrefix {
+		t.Errorf("expected title %q, got %q", expectedPrefix, note.Title)
+	}
+}
+
+func TestCreateProjectNote_CrossTenantLinkPrevention(t *testing.T) {
+	ctx := context.Background()
+	mock := newMockQuerier()
+	projectSvc := service.NewProjectService(mock, nil)
+	noteSvc := service.NewNoteService(mock, nil)
+
+	p, err := projectSvc.CreateProject(ctx, "user-alice", domain.CreateProjectRequest{
+		Title: "Alice's Workspace",
+	})
+	if err != nil {
+		t.Fatalf("failed to create project: %v", err)
+	}
+
+	// Alice's note
+	aliceNote, err := noteSvc.CreateQuicknote(ctx, "user-alice", "Alice Note 1")
+	if err != nil {
+		t.Fatalf("failed to create Alice note: %v", err)
+	}
+
+	// Bob's note (different user)
+	bobNote, err := noteSvc.CreateQuicknote(ctx, "user-bob", "Bob Note Private")
+	if err != nil {
+		t.Fatalf("failed to create Bob note: %v", err)
+	}
+
+	// Alice creates a project note attempting to link to both Alice's note and Bob's note
+	newNote, err := noteSvc.CreateProjectNote(ctx, "user-alice", p.ID, domain.CreateNoteRequest{
+		Title:         "Alice Linked Note",
+		Content:       "Attempting to link cross-tenant",
+		LinkedNoteIDs: []string{aliceNote.ID, bobNote.ID},
+	})
+	if err != nil {
+		t.Fatalf("failed to create note: %v", err)
+	}
+
+	// Fetch detail - only Alice's note should be in LinkedNotes
+	detail, err := noteSvc.GetNote(ctx, "user-alice", newNote.ID)
+	if err != nil {
+		t.Fatalf("failed to get note detail: %v", err)
+	}
+
+	if len(detail.LinkedNotes) != 1 {
+		t.Fatalf("expected exactly 1 linked note (cross-tenant pruned), got %d", len(detail.LinkedNotes))
+	}
+	if detail.LinkedNotes[0].ID != aliceNote.ID {
+		t.Errorf("expected linked note to be Alice's note %s, got %s", aliceNote.ID, detail.LinkedNotes[0].ID)
+	}
+}
+
+func TestUpdateNote_LinkSynchronization(t *testing.T) {
+	ctx := context.Background()
+	mock := newMockQuerier()
+	projectSvc := service.NewProjectService(mock, nil)
+	noteSvc := service.NewNoteService(mock, nil)
+
+	p, err := projectSvc.CreateProject(ctx, "user-sync", domain.CreateProjectRequest{
+		Title: "Sync Workspace",
+	})
+	if err != nil {
+		t.Fatalf("failed to create project: %v", err)
+	}
+
+	n1, _ := noteSvc.CreateQuicknote(ctx, "user-sync", "Target Note 1")
+	n2, _ := noteSvc.CreateQuicknote(ctx, "user-sync", "Target Note 2")
+	n3, _ := noteSvc.CreateQuicknote(ctx, "user-sync", "Target Note 3")
+
+	// Initially link to n1 and n2
+	sourceNote, err := noteSvc.CreateProjectNote(ctx, "user-sync", p.ID, domain.CreateNoteRequest{
+		Title:         "Source Note",
+		Content:       "Initial links",
+		LinkedNoteIDs: []string{n1.ID, n2.ID},
+	})
+	if err != nil {
+		t.Fatalf("failed to create note: %v", err)
+	}
+
+	detail, err := noteSvc.GetNote(ctx, "user-sync", sourceNote.ID)
+	if err != nil {
+		t.Fatalf("failed to get note: %v", err)
+	}
+	if len(detail.LinkedNotes) != 2 {
+		t.Fatalf("expected 2 linked notes, got %d", len(detail.LinkedNotes))
+	}
+
+	// Update links: remove n1 and n2, link only to n3
+	_, err = noteSvc.UpdateNote(ctx, "user-sync", sourceNote.ID, domain.UpdateNoteRequest{
+		Title:         "Source Note",
+		Content:       "Updated links to n3",
+		LinkedNoteIDs: []string{n3.ID},
+	})
+	if err != nil {
+		t.Fatalf("UpdateNote failed: %v", err)
+	}
+
+	detailAfterUpdate, err := noteSvc.GetNote(ctx, "user-sync", sourceNote.ID)
+	if err != nil {
+		t.Fatalf("failed to get note after update: %v", err)
+	}
+	if len(detailAfterUpdate.LinkedNotes) != 1 {
+		t.Fatalf("expected 1 linked note after update, got %d", len(detailAfterUpdate.LinkedNotes))
+	}
+	if detailAfterUpdate.LinkedNotes[0].ID != n3.ID {
+		t.Errorf("expected linked note to be %s, got %s", n3.ID, detailAfterUpdate.LinkedNotes[0].ID)
+	}
+
+	// Clear all links
+	_, err = noteSvc.UpdateNote(ctx, "user-sync", sourceNote.ID, domain.UpdateNoteRequest{
+		Title:         "Source Note",
+		Content:       "All links cleared",
+		LinkedNoteIDs: []string{},
+	})
+	if err != nil {
+		t.Fatalf("UpdateNote clear links failed: %v", err)
+	}
+
+	detailCleared, err := noteSvc.GetNote(ctx, "user-sync", sourceNote.ID)
+	if err != nil {
+		t.Fatalf("failed to get note after clear: %v", err)
+	}
+	if len(detailCleared.LinkedNotes) != 0 {
+		t.Errorf("expected 0 linked notes after clearing, got %d", len(detailCleared.LinkedNotes))
+	}
+}
+

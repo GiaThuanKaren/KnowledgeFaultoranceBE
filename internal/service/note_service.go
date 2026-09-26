@@ -45,8 +45,9 @@ func (s *NoteService) CreateQuicknote(ctx context.Context, uid string, content s
 		firstLine := strings.TrimSpace(lines[0])
 		firstLine = strings.TrimPrefix(firstLine, "# ")
 		firstLine = strings.TrimSpace(firstLine)
-		if len(firstLine) > 50 {
-			firstLine = firstLine[:50]
+		runes := []rune(firstLine)
+		if len(runes) > 50 {
+			firstLine = string(runes[:50])
 		}
 		if firstLine != "" {
 			title = firstLine
@@ -147,6 +148,12 @@ func (s *NoteService) CreateProjectNote(ctx context.Context, uid string, project
 			continue // skip invalid UUIDs
 		}
 
+		// Cross-tenant check: ensure target note belongs to the same user
+		targetNote, err := s.queries.GetNoteByID(ctx, targetUUID)
+		if err != nil || targetNote.UserID != uid {
+			continue // ignore notes of other users or non-existent notes
+		}
+
 		_, _ = s.queries.InsertNoteLink(ctx, db.InsertNoteLinkParams{
 			SourceNoteID: n.ID,
 			TargetNoteID: targetUUID,
@@ -226,7 +233,9 @@ func (s *NoteService) GetNote(ctx context.Context, uid string, noteID string) (*
 
 	linkedNotes := make([]domain.Note, 0, len(dbLinked))
 	for _, l := range dbLinked {
-		linkedNotes = append(linkedNotes, mapNoteToDomain(l))
+		if l.UserID == uid {
+			linkedNotes = append(linkedNotes, mapNoteToDomain(l))
+		}
 	}
 
 	return &domain.NoteDetail{
@@ -275,6 +284,8 @@ func (s *NoteService) UpdateNote(ctx context.Context, uid string, noteID string,
 
 	// Update links if specified
 	if req.LinkedNoteIDs != nil {
+		_ = s.queries.DeleteNoteLinksByNoteID(ctx, updated.ID)
+
 		sourceIDStr := uuidToString(updated.ID)
 		seen := make(map[string]struct{})
 		for _, targetIDStr := range req.LinkedNoteIDs {
@@ -289,6 +300,12 @@ func (s *NoteService) UpdateNote(ctx context.Context, uid string, noteID string,
 
 			targetUUID, err := parseUUID(targetIDStr)
 			if err != nil {
+				continue
+			}
+
+			// Cross-tenant check: ensure target note belongs to the same user
+			targetNote, err := s.queries.GetNoteByID(ctx, targetUUID)
+			if err != nil || targetNote.UserID != uid {
 				continue
 			}
 
