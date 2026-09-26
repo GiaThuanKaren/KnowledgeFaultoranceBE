@@ -36,4 +36,4 @@ clean:
 
 sqlc-generate:
 	@echo "==> Generating sqlc code..."
-	sqlc generate
+	go run github.com/sqlc-dev/sqlc/cmd/sqlc@latest generate
