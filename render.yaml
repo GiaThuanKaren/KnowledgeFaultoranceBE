@@ -10,6 +10,8 @@ services:
         value: 8080
       - key: ENVIRONMENT
         value: production
+
+      # Option A: Connection String URLs
       - key: DATABASE_URL
         fromDatabase:
           name: kfdesktop-db
@@ -19,6 +21,45 @@ services:
           type: redis
           name: kfdesktop-redis
           property: connectionString
+
+      # Option B: Individual Connection Parameters
+      - key: DB_HOST
+        fromDatabase:
+          name: kfdesktop-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: kfdesktop-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: kfdesktop-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: kfdesktop-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: kfdesktop-db
+          property: database
+      - key: DB_SSLMODE
+        value: require
+
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: kfdesktop-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: kfdesktop-redis
+          property: port
+      - key: REDIS_PASSWORD
+        sync: false
+
+      # Firebase Auth Service Account Credentials
       - key: FIREBASE_CREDENTIALS_JSON
         sync: false
 

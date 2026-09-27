@@ -4,9 +4,17 @@ primary_region = "sin"
 [build]
   dockerfile = "Dockerfile"
 
+# Environment variables matching .env.example
+# Sensitive values (DATABASE_URL, REDIS_URL, DB_PASSWORD, REDIS_PASSWORD, FIREBASE_CREDENTIALS_JSON)
+# should be configured as Fly secrets via: fly secrets set KEY=VALUE
 [env]
   PORT = "8080"
   ENVIRONMENT = "production"
+  DB_PORT = "5432"
+  DB_NAME = "kfdesktop"
+  DB_USER = "postgres"
+  DB_SSLMODE = "disable"
+  REDIS_PORT = "6379"
 
 [http_service]
   internal_port = 8080
@@ -20,6 +28,13 @@ primary_region = "sin"
     type = "requests"
     hard_limit = 250
     soft_limit = 200
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "15s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
 
 [[vm]]
   memory = "256mb"

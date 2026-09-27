@@ -329,6 +329,70 @@ func (m *mockQuerier) GetDailyStatsByYear(ctx context.Context, arg db.GetDailySt
 	return res, nil
 }
 
+func (m *mockQuerier) HardDeleteProject(ctx context.Context, arg db.HardDeleteProjectParams) error {
+	idStr := uuid.UUID(arg.ID.Bytes).String()
+	p, ok := m.projects[idStr]
+	if !ok || p.UserID != arg.UserID {
+		return pgx.ErrNoRows
+	}
+	delete(m.projects, idStr)
+	return nil
+}
+
+func (m *mockQuerier) RestoreProject(ctx context.Context, arg db.RestoreProjectParams) (db.Project, error) {
+	idStr := uuid.UUID(arg.ID.Bytes).String()
+	p, ok := m.projects[idStr]
+	if !ok || p.UserID != arg.UserID || !p.DeletedAt.Valid {
+		return db.Project{}, pgx.ErrNoRows
+	}
+	p.DeletedAt = pgtype.Timestamptz{Valid: false}
+	p.UpdatedAt = pgtype.Timestamptz{Time: time.Now(), Valid: true}
+	m.projects[idStr] = p
+	return p, nil
+}
+
+func (m *mockQuerier) ListDeletedProjectsByUser(ctx context.Context, userID string) ([]db.Project, error) {
+	res := make([]db.Project, 0)
+	for _, p := range m.projects {
+		if p.UserID == userID && p.DeletedAt.Valid {
+			res = append(res, p)
+		}
+	}
+	return res, nil
+}
+
+func (m *mockQuerier) HardDeleteNote(ctx context.Context, arg db.HardDeleteNoteParams) error {
+	idStr := uuid.UUID(arg.ID.Bytes).String()
+	n, ok := m.notes[idStr]
+	if !ok || n.UserID != arg.UserID {
+		return pgx.ErrNoRows
+	}
+	delete(m.notes, idStr)
+	return nil
+}
+
+func (m *mockQuerier) RestoreNote(ctx context.Context, arg db.RestoreNoteParams) (db.Note, error) {
+	idStr := uuid.UUID(arg.ID.Bytes).String()
+	n, ok := m.notes[idStr]
+	if !ok || n.UserID != arg.UserID || !n.DeletedAt.Valid {
+		return db.Note{}, pgx.ErrNoRows
+	}
+	n.DeletedAt = pgtype.Timestamptz{Valid: false}
+	n.UpdatedAt = pgtype.Timestamptz{Time: time.Now(), Valid: true}
+	m.notes[idStr] = n
+	return n, nil
+}
+
+func (m *mockQuerier) ListDeletedNotesByUser(ctx context.Context, userID string) ([]db.Note, error) {
+	res := make([]db.Note, 0)
+	for _, n := range m.notes {
+		if n.UserID == userID && n.DeletedAt.Valid {
+			res = append(res, n)
+		}
+	}
+	return res, nil
+}
+
 var _ db.Querier = (*mockQuerier)(nil)
 
 type mockVerifier struct {
