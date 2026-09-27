@@ -213,3 +213,70 @@ func (s *ProjectService) DeleteProject(ctx context.Context, uid string, projectI
 
 	return nil
 }
+
+// ListDeletedProjects retrieves soft-deleted projects for a user
+func (s *ProjectService) ListDeletedProjects(ctx context.Context, uid string) ([]domain.Project, error) {
+	if strings.TrimSpace(uid) == "" {
+		return nil, domain.ErrUnauthorized
+	}
+
+	dbProjects, err := s.queries.ListDeletedProjectsByUser(ctx, uid)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list deleted projects: %w", err)
+	}
+
+	projects := make([]domain.Project, 0, len(dbProjects))
+	for _, p := range dbProjects {
+		projects = append(projects, mapProjectToDomain(p))
+	}
+
+	return projects, nil
+}
+
+// RestoreProject restores a soft-deleted project by resetting deleted_at to NULL
+func (s *ProjectService) RestoreProject(ctx context.Context, uid string, projectID string) (*domain.Project, error) {
+	if strings.TrimSpace(uid) == "" {
+		return nil, domain.ErrUnauthorized
+	}
+
+	pUUID, err := parseUUID(projectID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: invalid project id format", domain.ErrValidation)
+	}
+
+	p, err := s.queries.RestoreProject(ctx, db.RestoreProjectParams{
+		ID:     pUUID,
+		UserID: uid,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to restore project: %w", err)
+	}
+
+	res := mapProjectToDomain(p)
+	return &res, nil
+}
+
+// HardDeleteProject permanently deletes a project from database
+func (s *ProjectService) HardDeleteProject(ctx context.Context, uid string, projectID string) error {
+	if strings.TrimSpace(uid) == "" {
+		return domain.ErrUnauthorized
+	}
+
+	pUUID, err := parseUUID(projectID)
+	if err != nil {
+		return fmt.Errorf("%w: invalid project id format", domain.ErrValidation)
+	}
+
+	err = s.queries.HardDeleteProject(ctx, db.HardDeleteProjectParams{
+		ID:     pUUID,
+		UserID: uid,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to permanently delete project: %w", err)
+	}
+
+	return nil
+}

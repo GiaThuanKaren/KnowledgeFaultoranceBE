@@ -263,3 +263,40 @@ func (h *NoteHandler) DeleteNote(w http.ResponseWriter, r *http.Request) {
 		"status": "ok",
 	})
 }
+
+// RestoreNote handles POST /api/v1/notes/{noteId}/restore
+func (h *NoteHandler) RestoreNote(w http.ResponseWriter, r *http.Request) {
+	uid, ok := middleware.GetUID(r.Context())
+	if !ok || uid == "" {
+		WriteError(w, http.StatusUnauthorized, "ERR_UNAUTHORIZED", "Unauthorized access")
+		return
+	}
+
+	noteID := chi.URLParam(r, "noteId")
+	note, err := h.noteService.RestoreNote(r.Context(), uid, noteID)
+	if err != nil {
+		HandleError(w, err)
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, note)
+}
+
+// HardDeleteNote handles DELETE /api/v1/notes/{noteId}/permanent
+func (h *NoteHandler) HardDeleteNote(w http.ResponseWriter, r *http.Request) {
+	uid, ok := middleware.GetUID(r.Context())
+	if !ok || uid == "" {
+		WriteError(w, http.StatusUnauthorized, "ERR_UNAUTHORIZED", "Unauthorized access")
+		return
+	}
+
+	noteID := chi.URLParam(r, "noteId")
+	if err := h.noteService.HardDeleteNote(r.Context(), uid, noteID); err != nil {
+		HandleError(w, err)
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, map[string]string{
+		"status": "ok",
+	})
+}

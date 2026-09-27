@@ -353,3 +353,70 @@ func (s *NoteService) DeleteNote(ctx context.Context, uid string, noteID string)
 
 	return nil
 }
+
+// ListDeletedNotes retrieves soft-deleted notes for a user
+func (s *NoteService) ListDeletedNotes(ctx context.Context, uid string) ([]domain.Note, error) {
+	if strings.TrimSpace(uid) == "" {
+		return nil, domain.ErrUnauthorized
+	}
+
+	dbNotes, err := s.queries.ListDeletedNotesByUser(ctx, uid)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list deleted notes: %w", err)
+	}
+
+	notes := make([]domain.Note, 0, len(dbNotes))
+	for _, n := range dbNotes {
+		notes = append(notes, mapNoteToDomain(n))
+	}
+
+	return notes, nil
+}
+
+// RestoreNote restores a soft-deleted note by resetting deleted_at to NULL
+func (s *NoteService) RestoreNote(ctx context.Context, uid string, noteID string) (*domain.Note, error) {
+	if strings.TrimSpace(uid) == "" {
+		return nil, domain.ErrUnauthorized
+	}
+
+	nUUID, err := parseUUID(noteID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: invalid note id format", domain.ErrValidation)
+	}
+
+	n, err := s.queries.RestoreNote(ctx, db.RestoreNoteParams{
+		ID:     nUUID,
+		UserID: uid,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to restore note: %w", err)
+	}
+
+	res := mapNoteToDomain(n)
+	return &res, nil
+}
+
+// HardDeleteNote permanently deletes a note from database
+func (s *NoteService) HardDeleteNote(ctx context.Context, uid string, noteID string) error {
+	if strings.TrimSpace(uid) == "" {
+		return domain.ErrUnauthorized
+	}
+
+	nUUID, err := parseUUID(noteID)
+	if err != nil {
+		return fmt.Errorf("%w: invalid note id format", domain.ErrValidation)
+	}
+
+	err = s.queries.HardDeleteNote(ctx, db.HardDeleteNoteParams{
+		ID:     nUUID,
+		UserID: uid,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to permanently delete note: %w", err)
+	}
+
+	return nil
+}

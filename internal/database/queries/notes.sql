@@ -42,6 +42,22 @@ SET deleted_at = NOW(),
     updated_at = NOW()
 WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL;
 
+-- name: ListDeletedNotesByUser :many
+SELECT * FROM notes
+WHERE user_id = $1 AND deleted_at IS NOT NULL
+ORDER BY deleted_at DESC;
+
+-- name: RestoreNote :one
+UPDATE notes
+SET deleted_at = NULL,
+    updated_at = NOW()
+WHERE id = $1 AND user_id = $2 AND deleted_at IS NOT NULL
+RETURNING *;
+
+-- name: HardDeleteNote :exec
+DELETE FROM notes
+WHERE id = $1 AND user_id = $2;
+
 -- name: InsertNoteLink :one
 INSERT INTO note_links (source_note_id, target_note_id)
 VALUES ($1, $2)

@@ -38,3 +38,19 @@ UPDATE projects
 SET deleted_at = NOW(),
     updated_at = NOW()
 WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL;
+
+-- name: ListDeletedProjectsByUser :many
+SELECT * FROM projects
+WHERE user_id = $1 AND deleted_at IS NOT NULL
+ORDER BY deleted_at DESC;
+
+-- name: RestoreProject :one
+UPDATE projects
+SET deleted_at = NULL,
+    updated_at = NOW()
+WHERE id = $1 AND user_id = $2 AND deleted_at IS NOT NULL
+RETURNING *;
+
+-- name: HardDeleteProject :exec
+DELETE FROM projects
+WHERE id = $1 AND user_id = $2;

@@ -77,6 +77,8 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		api.Get("/projects/{projectId}", projectHandler.GetProject)
 		api.Put("/projects/{projectId}", projectHandler.UpdateProject)
 		api.Delete("/projects/{projectId}", projectHandler.DeleteProject)
+		api.Post("/projects/{projectId}/restore", projectHandler.RestoreProject)
+		api.Delete("/projects/{projectId}/permanent", projectHandler.HardDeleteProject)
 
 		// Project-scoped note endpoints
 		api.Post("/projects/{projectId}/notes", noteHandler.CreateProjectNote)
@@ -88,6 +90,31 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		api.Get("/notes/{noteId}", noteHandler.GetNote)
 		api.Put("/notes/{noteId}", noteHandler.UpdateNote)
 		api.Delete("/notes/{noteId}", noteHandler.DeleteNote)
+		api.Post("/notes/{noteId}/restore", noteHandler.RestoreNote)
+		api.Delete("/notes/{noteId}/permanent", noteHandler.HardDeleteNote)
+
+		// Unified Trash endpoint
+		api.Get("/trash", func(w http.ResponseWriter, r *http.Request) {
+			uid, ok := middleware.GetUID(r.Context())
+			if !ok || uid == "" {
+				WriteError(w, http.StatusUnauthorized, "ERR_UNAUTHORIZED", "Unauthorized access")
+				return
+			}
+			delProjects, err := cfg.ProjectService.ListDeletedProjects(r.Context(), uid)
+			if err != nil {
+				HandleError(w, err)
+				return
+			}
+			delNotes, err := cfg.NoteService.ListDeletedNotes(r.Context(), uid)
+			if err != nil {
+				HandleError(w, err)
+				return
+			}
+			WriteJSON(w, http.StatusOK, map[string]interface{}{
+				"projects": delProjects,
+				"notes":    delNotes,
+			})
+		})
 	})
 
 	return r

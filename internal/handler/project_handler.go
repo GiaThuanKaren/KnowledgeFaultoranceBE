@@ -212,3 +212,40 @@ func (h *ProjectHandler) DeleteProject(w http.ResponseWriter, r *http.Request) {
 		"status": "ok",
 	})
 }
+
+// RestoreProject handles POST /api/v1/projects/{projectId}/restore
+func (h *ProjectHandler) RestoreProject(w http.ResponseWriter, r *http.Request) {
+	uid, ok := middleware.GetUID(r.Context())
+	if !ok || uid == "" {
+		WriteError(w, http.StatusUnauthorized, "ERR_UNAUTHORIZED", "Unauthorized access")
+		return
+	}
+
+	projectID := chi.URLParam(r, "projectId")
+	project, err := h.projectService.RestoreProject(r.Context(), uid, projectID)
+	if err != nil {
+		HandleError(w, err)
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, project)
+}
+
+// HardDeleteProject handles DELETE /api/v1/projects/{projectId}/permanent
+func (h *ProjectHandler) HardDeleteProject(w http.ResponseWriter, r *http.Request) {
+	uid, ok := middleware.GetUID(r.Context())
+	if !ok || uid == "" {
+		WriteError(w, http.StatusUnauthorized, "ERR_UNAUTHORIZED", "Unauthorized access")
+		return
+	}
+
+	projectID := chi.URLParam(r, "projectId")
+	if err := h.projectService.HardDeleteProject(r.Context(), uid, projectID); err != nil {
+		HandleError(w, err)
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, map[string]string{
+		"status": "ok",
+	})
+}
