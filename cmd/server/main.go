@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log/slog"
 	"net/http"
 	"os"
@@ -45,10 +46,17 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
+	portFlag := flag.String("port", "", "server listening port (overrides PORT environment variable)")
+	flag.Parse()
+
 	cfg, err := config.Load()
 	if err != nil {
 		slog.Error("failed to load configuration", "error", err)
 		os.Exit(1)
+	}
+
+	if *portFlag != "" {
+		cfg.Port = *portFlag
 	}
 
 	slog.Info("starting FeaziestFlow Backend Server",
