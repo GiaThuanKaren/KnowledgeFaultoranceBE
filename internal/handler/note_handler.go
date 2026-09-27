@@ -30,6 +30,17 @@ func NewNoteHandler(noteService *service.NoteService) *NoteHandler {
 }
 
 // CreateQuicknote handles POST /api/v1/notes/quick
+// @Summary      Create unassigned quicknote
+// @Description  Creates an unassigned quicknote (< 200ms latency target) and increments daily heatmap stats
+// @Tags         notes
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request  body      QuicknoteRequest  true  "Quicknote payload"
+// @Success      201      {object}  domain.Note
+// @Failure      400      {object}  ErrorEnvelope
+// @Failure      401      {object}  ErrorEnvelope
+// @Router       /api/v1/notes/quick [post]
 func (h *NoteHandler) CreateQuicknote(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.GetUID(r.Context())
 	if !ok || uid == "" {
@@ -58,6 +69,14 @@ func (h *NoteHandler) CreateQuicknote(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListQuicknotes handles GET /api/v1/notes/quick
+// @Summary      List unassigned quicknotes
+// @Description  Retrieve all active unassigned notes (project_id IS NULL)
+// @Tags         notes
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {array}   domain.Note
+// @Failure      401  {object}  ErrorEnvelope
+// @Router       /api/v1/notes/quick [get]
 func (h *NoteHandler) ListQuicknotes(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.GetUID(r.Context())
 	if !ok || uid == "" {
@@ -79,6 +98,20 @@ func (h *NoteHandler) ListQuicknotes(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateProjectNote handles POST /api/v1/projects/{projectId}/notes
+// @Summary      Create project note
+// @Description  Create a note associated with a specific project, with optional bidirectional cross-links
+// @Tags         notes
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        projectId  path      string                    true  "Project UUID"
+// @Param        request    body      domain.CreateNoteRequest  true  "Note payload"
+// @Success      201        {object}  domain.Note
+// @Failure      400        {object}  ErrorEnvelope
+// @Failure      401        {object}  ErrorEnvelope
+// @Failure      403        {object}  ErrorEnvelope
+// @Failure      404        {object}  ErrorEnvelope
+// @Router       /api/v1/projects/{projectId}/notes [post]
 func (h *NoteHandler) CreateProjectNote(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.GetUID(r.Context())
 	if !ok || uid == "" {
@@ -103,6 +136,16 @@ func (h *NoteHandler) CreateProjectNote(w http.ResponseWriter, r *http.Request) 
 }
 
 // ListProjectNotes handles GET /api/v1/projects/{projectId}/notes
+// @Summary      List project notes
+// @Description  Retrieve all active notes belonging to a specific project
+// @Tags         notes
+// @Produce      json
+// @Security     BearerAuth
+// @Param        projectId  path      string  true  "Project UUID"
+// @Success      200        {array}   domain.Note
+// @Failure      401        {object}  ErrorEnvelope
+// @Failure      403        {object}  ErrorEnvelope
+// @Router       /api/v1/projects/{projectId}/notes [get]
 func (h *NoteHandler) ListProjectNotes(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.GetUID(r.Context())
 	if !ok || uid == "" {
@@ -125,6 +168,17 @@ func (h *NoteHandler) ListProjectNotes(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetNote handles GET /api/v1/notes/{noteId}
+// @Summary      Get note details
+// @Description  Retrieve single note content along with its bidirectional linked notes knowledge graph
+// @Tags         notes
+// @Produce      json
+// @Security     BearerAuth
+// @Param        noteId  path      string  true  "Note UUID"
+// @Success      200     {object}  domain.NoteDetail
+// @Failure      401     {object}  ErrorEnvelope
+// @Failure      403     {object}  ErrorEnvelope
+// @Failure      404     {object}  ErrorEnvelope
+// @Router       /api/v1/notes/{noteId} [get]
 func (h *NoteHandler) GetNote(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.GetUID(r.Context())
 	if !ok || uid == "" {
@@ -143,6 +197,20 @@ func (h *NoteHandler) GetNote(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateNote handles PUT /api/v1/notes/{noteId}
+// @Summary      Update note
+// @Description  Update note title, markdown content, and synchronized linked note relations
+// @Tags         notes
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        noteId   path      string                    true  "Note UUID"
+// @Param        request  body      domain.UpdateNoteRequest  true  "Update payload"
+// @Success      200      {object}  domain.Note
+// @Failure      400      {object}  ErrorEnvelope
+// @Failure      401      {object}  ErrorEnvelope
+// @Failure      403      {object}  ErrorEnvelope
+// @Failure      404      {object}  ErrorEnvelope
+// @Router       /api/v1/notes/{noteId} [put]
 func (h *NoteHandler) UpdateNote(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.GetUID(r.Context())
 	if !ok || uid == "" {
@@ -167,6 +235,17 @@ func (h *NoteHandler) UpdateNote(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteNote handles DELETE /api/v1/notes/{noteId}
+// @Summary      Soft-delete note
+// @Description  Marks a note as deleted without physical record removal
+// @Tags         notes
+// @Produce      json
+// @Security     BearerAuth
+// @Param        noteId  path      string  true  "Note UUID"
+// @Success      200     {object}  map[string]string
+// @Failure      401     {object}  ErrorEnvelope
+// @Failure      403     {object}  ErrorEnvelope
+// @Failure      404     {object}  ErrorEnvelope
+// @Router       /api/v1/notes/{noteId} [delete]
 func (h *NoteHandler) DeleteNote(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.GetUID(r.Context())
 	if !ok || uid == "" {

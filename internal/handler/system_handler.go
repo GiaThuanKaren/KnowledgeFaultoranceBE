@@ -24,6 +24,12 @@ func NewSystemHandler(dbPool *pgxpool.Pool, redisClient *redis.Client) *SystemHa
 }
 
 // Health handles liveness probe: GET /health
+// @Summary      Liveness probe
+// @Description  Check if the API server is alive
+// @Tags         system
+// @Produce      json
+// @Success      200  {object}  map[string]string
+// @Router       /health [get]
 func (h *SystemHandler) Health(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, map[string]string{
 		"status": "ok",
@@ -31,6 +37,13 @@ func (h *SystemHandler) Health(w http.ResponseWriter, r *http.Request) {
 }
 
 // Ready handles readiness probe: GET /ready
+// @Summary      Readiness probe
+// @Description  Check if the API server and its downstream dependencies (PostgreSQL & Redis) are ready
+// @Tags         system
+// @Produce      json
+// @Success      200  {object}  map[string]string
+// @Failure      503  {object}  map[string]string
+// @Router       /ready [get]
 func (h *SystemHandler) Ready(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()

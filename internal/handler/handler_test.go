@@ -899,3 +899,44 @@ func TestRouter_RateLimiting(t *testing.T) {
 	}
 }
 
+// 13. Swagger Documentation Route
+func TestRouter_SwaggerDocumentation(t *testing.T) {
+	mock := newMockQuerier()
+	userSvc := service.NewUserService(mock, nil)
+	projectSvc := service.NewProjectService(mock, nil)
+	noteSvc := service.NewNoteService(mock, nil)
+
+	r := handler.NewRouter(handler.RouterConfig{
+		UserService:    userSvc,
+		ProjectService: projectSvc,
+		NoteService:    noteSvc,
+		TokenVerifier:  &mockVerifier{},
+	})
+
+	// Test GET /api/docs redirects to /api/docs/index.html
+	req := httptest.NewRequest(http.MethodGet, "/api/docs", nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusMovedPermanently {
+		t.Errorf("expected 301 Moved Permanently, got %d", rec.Code)
+	}
+
+	// Test GET /api/docs/doc.json returns 200 OK with valid JSON
+	reqDoc := httptest.NewRequest(http.MethodGet, "/api/docs/doc.json", nil)
+	recDoc := httptest.NewRecorder()
+	r.ServeHTTP(recDoc, reqDoc)
+
+	if recDoc.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for /api/docs/doc.json, got %d", recDoc.Code)
+	}
+
+	var swaggerDoc map[string]any
+	if err := json.Unmarshal(recDoc.Body.Bytes(), &swaggerDoc); err != nil {
+		t.Fatalf("failed to parse swagger JSON: %v", err)
+	}
+	if swaggerDoc["swagger"] != "2.0" && swaggerDoc["openapi"] == nil {
+		t.Errorf("expected valid swagger/openapi schema, got: %v", swaggerDoc["swagger"])
+	}
+}
+

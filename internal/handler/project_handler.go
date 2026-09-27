@@ -33,6 +33,17 @@ func NewProjectHandler(projectService *service.ProjectService) *ProjectHandler {
 }
 
 // CreateProject handles POST /api/v1/projects
+// @Summary      Create a new workspace project
+// @Description  Creates a new project owned by the authenticated user
+// @Tags         projects
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request  body      domain.CreateProjectRequest  true  "Project creation payload"
+// @Success      201      {object}  domain.Project
+// @Failure      400      {object}  ErrorEnvelope
+// @Failure      401      {object}  ErrorEnvelope
+// @Router       /api/v1/projects [post]
 func (h *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.GetUID(r.Context())
 	if !ok || uid == "" {
@@ -56,6 +67,16 @@ func (h *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListProjects handles GET /api/v1/projects?page=1&limit=20
+// @Summary      List user workspace projects
+// @Description  Retrieve paginated list of non-deleted projects for the authenticated user
+// @Tags         projects
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page   query     int  false  "Page number (default: 1)"
+// @Param        limit  query     int  false  "Page limit (default: 20)"
+// @Success      200    {object}  ProjectListResponse
+// @Failure      401    {object}  ErrorEnvelope
+// @Router       /api/v1/projects [get]
 func (h *ProjectHandler) ListProjects(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.GetUID(r.Context())
 	if !ok || uid == "" {
@@ -96,6 +117,17 @@ func (h *ProjectHandler) ListProjects(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetProject handles GET /api/v1/projects/{projectId}
+// @Summary      Get project by ID
+// @Description  Retrieve single project details owned by the authenticated user
+// @Tags         projects
+// @Produce      json
+// @Security     BearerAuth
+// @Param        projectId  path      string  true  "Project UUID"
+// @Success      200        {object}  domain.Project
+// @Failure      401        {object}  ErrorEnvelope
+// @Failure      403        {object}  ErrorEnvelope
+// @Failure      404        {object}  ErrorEnvelope
+// @Router       /api/v1/projects/{projectId} [get]
 func (h *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.GetUID(r.Context())
 	if !ok || uid == "" {
@@ -114,6 +146,20 @@ func (h *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateProject handles PUT /api/v1/projects/{projectId}
+// @Summary      Update existing project
+// @Description  Update project title, description, color, or Kanban status
+// @Tags         projects
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        projectId  path      string                       true  "Project UUID"
+// @Param        request    body      domain.UpdateProjectRequest  true  "Update payload"
+// @Success      200        {object}  domain.Project
+// @Failure      400        {object}  ErrorEnvelope
+// @Failure      401        {object}  ErrorEnvelope
+// @Failure      403        {object}  ErrorEnvelope
+// @Failure      404        {object}  ErrorEnvelope
+// @Router       /api/v1/projects/{projectId} [put]
 func (h *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.GetUID(r.Context())
 	if !ok || uid == "" {
@@ -138,6 +184,17 @@ func (h *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteProject handles DELETE /api/v1/projects/{projectId}
+// @Summary      Soft-delete project
+// @Description  Marks a project as deleted without removing physical records
+// @Tags         projects
+// @Produce      json
+// @Security     BearerAuth
+// @Param        projectId  path      string  true  "Project UUID"
+// @Success      200        {object}  map[string]string
+// @Failure      401        {object}  ErrorEnvelope
+// @Failure      403        {object}  ErrorEnvelope
+// @Failure      404        {object}  ErrorEnvelope
+// @Router       /api/v1/projects/{projectId} [delete]
 func (h *ProjectHandler) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	uid, ok := middleware.GetUID(r.Context())
 	if !ok || uid == "" {

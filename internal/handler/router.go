@@ -8,7 +8,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 
+	_ "github.com/feaziest/kfdesktopbe/docs"
 	"github.com/feaziest/kfdesktopbe/internal/middleware"
 	"github.com/feaziest/kfdesktopbe/internal/service"
 )
@@ -38,6 +40,14 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	systemHandler := NewSystemHandler(cfg.DBPool, cfg.RedisClient)
 	r.Get("/health", systemHandler.Health)
 	r.Get("/ready", systemHandler.Ready)
+
+	// Swagger documentation route
+	r.Get("/api/docs", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/api/docs/index.html", http.StatusMovedPermanently)
+	})
+	r.Get("/api/docs/*", httpSwagger.Handler(
+		httpSwagger.URL("/api/docs/doc.json"),
+	))
 
 	// API v1 handlers
 	userHandler := NewUserHandler(cfg.UserService)

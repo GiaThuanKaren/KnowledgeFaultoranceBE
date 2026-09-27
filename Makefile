@@ -37,3 +37,7 @@ clean:
 sqlc-generate:
 	@echo "==> Generating sqlc code..."
 	go run github.com/sqlc-dev/sqlc/cmd/sqlc@latest generate
+
+swagger:
+	@echo "==> Generating Swagger documentation..."
+	go run github.com/swaggo/swag/cmd/swag init -g cmd/server/main.go -o docs

@@ -2,8 +2,9 @@
 
 Dịch vụ Backend REST API hiệu năng cao viết bằng Golang cho ứng dụng FeaziestFlow (Knowledge Fault Tolerance), tuân thủ triết lý "Feasible, Easiest, Flow".
 
-> 📖 **Dành Cho Lập Trình Viên:**
-> Xem chi tiết các bước cài đặt và khởi chạy API trong lúc phát triển tại: [Hướng Dẫn Setup Dev (docs/SETUP_DEV.md)](file:///D:/Workspace/Feaziest/KnowledgeFaultorance/kfdesktopbe/docs/SETUP_DEV.md).
+> 📖 **Tài Liệu Phát Triển:**
+> - Hướng dẫn setup và khởi chạy API: [SETUP_DEV.md](file:///D:/Workspace/Feaziest/KnowledgeFaultorance/kfdesktopbe/docs/SETUP_DEV.md).
+> - Tài liệu API Swagger UI (`/api/docs`): [SWAGGER_GUIDE.md](file:///D:/Workspace/Feaziest/KnowledgeFaultorance/kfdesktopbe/docs/SWAGGER_GUIDE.md).
 
 ---
 

@@ -30,7 +30,7 @@ type Config struct {
 func Load() (*Config, error) {
 	// Try loading .env if it exists, ignore error if file not present
 	_ = godotenv.Load()
-
+	
 	port := getEnv("PORT", "8080")
 
 	// Individual DB configs

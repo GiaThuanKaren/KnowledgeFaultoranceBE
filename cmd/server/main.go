@@ -22,6 +22,24 @@ import (
 	"github.com/feaziest/kfdesktopbe/internal/service"
 )
 
+// @title           Knowledge Faultorance (FeaziestFlow) API
+// @version         1.0
+// @description     High-performance REST API backend for Knowledge Faultorance (FeaziestFlow) desktop knowledge base.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    https://github.com/feaziest/kfdesktopbe
+
+// @license.name  MIT
+// @license.url   https://opensource.org/licenses/MIT
+
+// @BasePath  /
+
+// @securityDefinitions.apikey  BearerAuth
+// @in                          header
+// @name                        Authorization
+// @description                 Type "Bearer" followed by a space and your Firebase ID Token (or mock-token:<uid> in development).
+
 func main() {
 	// Initialize structured slog logging
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))

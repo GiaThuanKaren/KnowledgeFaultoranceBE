@@ -1,0 +1,723 @@
+basePath: /
+definitions:
+  domain.CreateNoteRequest:
+    properties:
+      content:
+        type: string
+      linked_note_ids:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+    type: object
+  domain.CreateProjectRequest:
+    properties:
+      color:
+        type: string
+      description:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+    type: object
+  domain.DailyStat:
+    properties:
+      activity_count:
+        type: integer
+      stat_date:
+        description: YYYY-MM-DD
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.Note:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      project_id:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.NoteDetail:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      linked_notes:
+        items:
+          $ref: '#/definitions/domain.Note'
+        type: array
+      project_id:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.Project:
+    properties:
+      color:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      status:
+        description: '''secondary'' | ''nextup'' | ''inprocess'' | ''completed'''
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.SyncUserParams:
+    properties:
+      avatar_url:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+    type: object
+  domain.UpdateNoteRequest:
+    properties:
+      content:
+        type: string
+      linked_note_ids:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+    type: object
+  domain.UpdateProjectRequest:
+    properties:
+      color:
+        type: string
+      description:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+    type: object
+  domain.User:
+    properties:
+      avatar_url:
+        type: string
+      created_at:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  handler.ErrorDetail:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  handler.ErrorEnvelope:
+    properties:
+      error:
+        $ref: '#/definitions/handler.ErrorDetail'
+    type: object
+  handler.ProjectListResponse:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      projects:
+        items:
+          $ref: '#/definitions/domain.Project'
+        type: array
+      total:
+        type: integer
+    type: object
+  handler.QuicknoteRequest:
+    properties:
+      content:
+        type: string
+    type: object
+info:
+  contact:
+    name: API Support
+    url: https://github.com/feaziest/kfdesktopbe
+  description: High-performance REST API backend for Knowledge Faultorance (FeaziestFlow)
+    desktop knowledge base.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Knowledge Faultorance (FeaziestFlow) API
+  version: "1.0"
+paths:
+  /api/v1/notes/{noteId}:
+    delete:
+      description: Marks a note as deleted without physical record removal
+      parameters:
+      - description: Note UUID
+        in: path
+        name: noteId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: Soft-delete note
+      tags:
+      - notes
+    get:
+      description: Retrieve single note content along with its bidirectional linked
+        notes knowledge graph
+      parameters:
+      - description: Note UUID
+        in: path
+        name: noteId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.NoteDetail'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: Get note details
+      tags:
+      - notes
+    put:
+      consumes:
+      - application/json
+      description: Update note title, markdown content, and synchronized linked note
+        relations
+      parameters:
+      - description: Note UUID
+        in: path
+        name: noteId
+        required: true
+        type: string
+      - description: Update payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Note'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: Update note
+      tags:
+      - notes
+  /api/v1/notes/quick:
+    get:
+      description: Retrieve all active unassigned notes (project_id IS NULL)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Note'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: List unassigned quicknotes
+      tags:
+      - notes
+    post:
+      consumes:
+      - application/json
+      description: Creates an unassigned quicknote (< 200ms latency target) and increments
+        daily heatmap stats
+      parameters:
+      - description: Quicknote payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.QuicknoteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Note'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: Create unassigned quicknote
+      tags:
+      - notes
+  /api/v1/projects:
+    get:
+      description: Retrieve paginated list of non-deleted projects for the authenticated
+        user
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Page limit (default: 20)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ProjectListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: List user workspace projects
+      tags:
+      - projects
+    post:
+      consumes:
+      - application/json
+      description: Creates a new project owned by the authenticated user
+      parameters:
+      - description: Project creation payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateProjectRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Project'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: Create a new workspace project
+      tags:
+      - projects
+  /api/v1/projects/{projectId}:
+    delete:
+      description: Marks a project as deleted without removing physical records
+      parameters:
+      - description: Project UUID
+        in: path
+        name: projectId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: Soft-delete project
+      tags:
+      - projects
+    get:
+      description: Retrieve single project details owned by the authenticated user
+      parameters:
+      - description: Project UUID
+        in: path
+        name: projectId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Project'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: Get project by ID
+      tags:
+      - projects
+    put:
+      consumes:
+      - application/json
+      description: Update project title, description, color, or Kanban status
+      parameters:
+      - description: Project UUID
+        in: path
+        name: projectId
+        required: true
+        type: string
+      - description: Update payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateProjectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Project'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: Update existing project
+      tags:
+      - projects
+  /api/v1/projects/{projectId}/notes:
+    get:
+      description: Retrieve all active notes belonging to a specific project
+      parameters:
+      - description: Project UUID
+        in: path
+        name: projectId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Note'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: List project notes
+      tags:
+      - notes
+    post:
+      consumes:
+      - application/json
+      description: Create a note associated with a specific project, with optional
+        bidirectional cross-links
+      parameters:
+      - description: Project UUID
+        in: path
+        name: projectId
+        required: true
+        type: string
+      - description: Note payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Note'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: Create project note
+      tags:
+      - notes
+  /api/v1/users/contributions:
+    get:
+      description: Retrieve 365-day contribution activity stats for heatmaps
+      parameters:
+      - description: Year for stats (defaults to current year)
+        in: query
+        name: year
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.DailyStat'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: Get user daily activity contributions
+      tags:
+      - users
+  /api/v1/users/me:
+    get:
+      description: Retrieve the authenticated user's profile information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - users
+  /api/v1/users/sync:
+    post:
+      consumes:
+      - application/json
+      description: Create or update user profile synchronized from Firebase Auth into
+        PostgreSQL
+      parameters:
+      - description: User sync payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.SyncUserParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      security:
+      - BearerAuth: []
+      summary: Sync user profile
+      tags:
+      - users
+  /health:
+    get:
+      description: Check if the API server is alive
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Liveness probe
+      tags:
+      - system
+  /ready:
+    get:
+      description: Check if the API server and its downstream dependencies (PostgreSQL
+        & Redis) are ready
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Readiness probe
+      tags:
+      - system
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and your Firebase ID Token (or
+      mock-token:<uid> in development).
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
