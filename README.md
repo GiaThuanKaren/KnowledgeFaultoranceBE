@@ -132,6 +132,15 @@ Hoặc dùng make:
 make test
 ```
 
+Chạy bộ kiểm thử End-to-End (E2E) Sanity Check:
+```bash
+# Standalone in-process test
+go run scripts/verify_e2e.go
+
+# Hoặc kiểm thử server đang chạy
+go run scripts/verify_e2e.go -url http://localhost:8080
+```
+
 ---
 
 ## 7. Triển Khai Lên Cloud (Cloud Deployments)
